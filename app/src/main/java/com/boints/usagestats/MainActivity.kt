@@ -3,6 +3,7 @@ package com.boints.usagestats
 import android.app.AppOpsManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -28,7 +29,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleScope.launchWhenStarted {
-            while(!accessGranted){
+            while (!accessGranted) {
                 accessGranted = isAccessGranted()
                 delay(500)
             }
@@ -39,13 +40,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Column{
+                    Column {
                         Text("Access granted: $accessGranted")
                         Button(
                             onClick = {
                                 showDialog()
                             }
-                        ){
+                        ) {
                             Text("Open settings")
                         }
                     }
@@ -55,9 +56,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun showDialog() {
+    fun showDialog(specifyPackage: Boolean = true) {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            .putExtra("android.provider.extra.APP_PACKAGE", packageName)
+
+        if (specifyPackage)
+            intent.data = Uri.parse("package:$packageName")
 
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivityForResult(intent, 0)
