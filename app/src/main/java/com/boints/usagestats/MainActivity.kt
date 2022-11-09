@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Process
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -20,7 +19,6 @@ import androidx.lifecycle.lifecycleScope
 import com.boints.usagestats.ui.theme.UsageStatsTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class MainActivity : ComponentActivity() {
@@ -28,8 +26,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        watchForUsageStatsPermission()
+        Toast.makeText(this, "Activity recreated!", Toast.LENGTH_LONG).show()
+        waitForUsageAccessPermissionGranted()
         setContent {
             UsageStatsTheme {
                 Surface(
@@ -40,7 +38,7 @@ class MainActivity : ComponentActivity() {
                         Text("Access granted: $accessGranted")
                         Button(
                             onClick = {
-                                showUsageStatsPermissionDialog()
+                                permitUsageAccess()
                             }
                         ) {
                             Text("Open settings")
@@ -51,42 +49,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun showUsageStatsPermissionDialog(specifyPackage: Boolean = true) {
+    fun permitUsageAccess(specifyPackage: Boolean = true) {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
 
         if (specifyPackage)
             intent.data = Uri.parse("package:$packageName")
 
-        //intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent,)
+//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK // Чтобы не оставалось в "последних" при возврате в приложение
+        startActivity(intent)
     }
 
-    private fun watchForUsageStatsPermission(): Unit {
-        val appOps = getSystemService(APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(), packageName
-        )
+    fun waitForUsageAccessPermissionGranted(): Boolean {
+        val appOpsManager = getSystemService(APP_OPS_SERVICE) as AppOpsManager
 
-        if (mode == AppOpsManager.MODE_ALLOWED) {
-            accessGranted = true
-            return
-        }
+        accessGranted = isAccessGranted()
+        if(accessGranted)
+            return true
 
-        fun watcher(op: String, packageName: String) {
-            val mode = appOps.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(), getPackageName()
-            )
-            if (mode != AppOpsManager.MODE_ALLOWED) {
-                accessGranted = false
+        fun grantPermissionWatcher(op: String, packageName: String) {
+            accessGranted = isAccessGranted()
+            if(!accessGranted)
                 return
-            }
-            //appOps.stopWatchingMode(::watcher)
-            accessGranted = true
 
             lifecycleScope.launch(Dispatchers.Main) {
                 Log.v("test456", "Try to launch activity!")
+                //appOpsManager.stopWatchingMode(::watcher)
                 val intent = Intent(this@MainActivity, MainActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 startActivity(intent)
@@ -95,20 +82,20 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        appOps.startWatchingMode(
+        appOpsManager.startWatchingMode(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
             applicationContext.packageName,
-            ::watcher
+            ::grantPermissionWatcher
         )
+        return false
     }
 
-    private fun isAccessGranted(): Boolean {
+    fun isAccessGranted(): Boolean {
         return try {
             val packageManager = packageManager
             val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
             val appOpsManager = getSystemService(APP_OPS_SERVICE) as AppOpsManager
-            var mode = 0
-            mode = appOpsManager.checkOpNoThrow(
+            val mode = appOpsManager.checkOpNoThrow(
                 AppOpsManager.OPSTR_GET_USAGE_STATS,
                 applicationInfo.uid, applicationInfo.packageName
             )
