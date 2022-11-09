@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -43,14 +44,15 @@ class UsageAccessHelper(
      * @forceToShow show settings activity always (even if permission is granted)
      * @return has permission already granted?
      */
-    fun permitUsageAccess(specifyPackage: Boolean = true, forceToShow: Boolean = false): Boolean {
+    @JvmOverloads
+    fun permitUsageAccess(forceToShow: Boolean = false): Boolean {
         val access = accessGranted
         if (access && !forceToShow)
             return true
 
         waitForUsageAccessPermissionGranted()
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        if (specifyPackage)
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P)
             intent.data = Uri.parse("package:${activity.packageName}")
 //        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK // Чтобы не оставалось в "последних" при возврате в приложение
         activity.startActivity(intent)
