@@ -7,6 +7,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -14,7 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.lifecycle.lifecycleScope
 import com.boints.usagestats.ui.theme.UsageStatsTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MainActivity : ComponentActivity() {
@@ -76,11 +82,17 @@ class MainActivity : ComponentActivity() {
                 accessGranted = false
                 return
             }
-            appOps.stopWatchingMode(::watcher)
+            //appOps.stopWatchingMode(::watcher)
             accessGranted = true
-            val intent = Intent(this@MainActivity, MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            applicationContext.startActivity(intent)
+
+            lifecycleScope.launch(Dispatchers.Main) {
+                Log.v("test456", "Try to launch activity!")
+                val intent = Intent(this@MainActivity, MainActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                startActivity(intent)
+                Toast.makeText(this@MainActivity, "Start: $intent", Toast.LENGTH_LONG).show()
+                Log.v("test456", "Activity launched success!")
+            }
         }
 
         appOps.startWatchingMode(
