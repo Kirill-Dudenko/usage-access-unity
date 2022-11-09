@@ -16,7 +16,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class UsageAccessHelper(
-    val activity: Context
+    /**
+     * Unity main activity
+     */
+    private val activity: Context
 ) {
     val accessGranted: Boolean
         get() {
@@ -35,7 +38,12 @@ class UsageAccessHelper(
             }
         }
 
-    fun permitUsageAccess(specifyPackage: Boolean = true, forceToShow: Boolean = true): Boolean {
+    /**
+     * Prompt usage access permission from user.
+     * @forceToShow show settings activity always (even if permission is granted)
+     * @return has permission already granted?
+     */
+    fun permitUsageAccess(specifyPackage: Boolean = true, forceToShow: Boolean = false): Boolean {
         val access = accessGranted
         if (access && !forceToShow)
             return true
