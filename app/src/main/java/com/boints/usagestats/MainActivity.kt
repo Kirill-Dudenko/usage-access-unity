@@ -19,15 +19,17 @@ import androidx.lifecycle.lifecycleScope
 import com.boints.usagestats.ui.theme.UsageStatsTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import usage.access.permission.helper.UsageAccessHelper
 
 
 class MainActivity : ComponentActivity() {
     var accessGranted by mutableStateOf(false)
+    val helper = UsageAccessHelper(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        accessGranted = helper.accessGranted
         Toast.makeText(this, "Activity recreated!", Toast.LENGTH_LONG).show()
-        waitForUsageAccessPermissionGranted()
         setContent {
             UsageStatsTheme {
                 Surface(
@@ -38,7 +40,7 @@ class MainActivity : ComponentActivity() {
                         Text("Access granted: $accessGranted")
                         Button(
                             onClick = {
-                                permitUsageAccess()
+                                accessGranted = helper.permitUsageAccess()
                             }
                         ) {
                             Text("Open settings")
@@ -46,62 +48,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-
-    fun permitUsageAccess(specifyPackage: Boolean = true) {
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-
-        if (specifyPackage)
-            intent.data = Uri.parse("package:$packageName")
-
-//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK // Чтобы не оставалось в "последних" при возврате в приложение
-        startActivity(intent)
-    }
-
-    fun waitForUsageAccessPermissionGranted(): Boolean {
-        val appOpsManager = getSystemService(APP_OPS_SERVICE) as AppOpsManager
-
-        accessGranted = isAccessGranted()
-        if(accessGranted)
-            return true
-
-        fun grantPermissionWatcher(op: String, packageName: String) {
-            accessGranted = isAccessGranted()
-            if(!accessGranted)
-                return
-
-            lifecycleScope.launch(Dispatchers.Main) {
-                Log.v("test456", "Try to launch activity!")
-                //appOpsManager.stopWatchingMode(::watcher)
-                val intent = Intent(this@MainActivity, MainActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                startActivity(intent)
-                Toast.makeText(this@MainActivity, "Start: $intent", Toast.LENGTH_LONG).show()
-                Log.v("test456", "Activity launched success!")
-            }
-        }
-
-        appOpsManager.startWatchingMode(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            applicationContext.packageName,
-            ::grantPermissionWatcher
-        )
-        return false
-    }
-
-    fun isAccessGranted(): Boolean {
-        return try {
-            val packageManager = packageManager
-            val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
-            val appOpsManager = getSystemService(APP_OPS_SERVICE) as AppOpsManager
-            val mode = appOpsManager.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                applicationInfo.uid, applicationInfo.packageName
-            )
-            mode == AppOpsManager.MODE_ALLOWED
-        } catch (e: PackageManager.NameNotFoundException) {
-            false
         }
     }
 }
