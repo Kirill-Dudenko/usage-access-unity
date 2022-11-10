@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
                         Text("Access granted: $accessGranted")
                         Button(
                             onClick = {
-                                accessGranted = helper.permitUsageAccess()
+                                accessGranted = helper.permitUsageAccess(forceToShow = true)
                             }
                         ) {
                             Text("Open settings")

@@ -68,13 +68,12 @@ class UsageAccessHelper(
                 return
 
             GlobalScope.launch(Dispatchers.Main) {
-                Log.v("test456", "Try to launch activity!")
+                log("Try to launch activity!")
                 appOpsManager.stopWatchingMode(::grantPermissionWatcher)
                 val intent = Intent(activity, activity.javaClass)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 activity.startActivity(intent)
-                Toast.makeText(activity, "Start: $intent", Toast.LENGTH_LONG).show()
-                Log.v("test456", "Activity launched success!")
+                log("Activity launched success!")
             }
         }
 
