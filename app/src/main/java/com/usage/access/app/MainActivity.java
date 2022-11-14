@@ -14,6 +14,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.usage.access.app.databinding.ActivityMainBinding;
+import com.usage.access.helper.UsageAccessHelper;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+    private UsageAccessHelper helper = new UsageAccessHelper(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +41,7 @@ public class MainActivity extends AppCompatActivity {
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                helper.permitUsageAccess(true);
             }
         });
     }
