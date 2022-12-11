@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "UsageAccessHelperJava"
-include ':app'
-include ':helper'
+include(":app")
+include(":helper")
